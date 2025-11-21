@@ -12,103 +12,113 @@
             --wow-panel: #181A21;
             --wow-border: #565656;
             --log-bg: rgba(0, 0, 0, 0.6);
-            /* 动态计算底部安全区，默认为 20px */
             --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
 
-        body {
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100dvh; /* 强制满屏 */
+            overflow: hidden; user-select: none;
             font-family: "KaiTi", "STKaiti", serif;
-            background-color: #050505;
-            color: #eee;
-            display: flex; flex-direction: column; align-items: center;
-            margin: 0; height: 100vh; overflow: hidden; user-select: none;
+            background-color: #050505; color: #eee;
+            display: flex; flex-direction: column; /* 垂直排列 */
             background-image: radial-gradient(circle at 50% 30%, #2a2a2a 0%, #000 80%);
         }
 
-        /* --- 顶部区域 --- */
+        /* 1. 顶部标题 (固定高度) */
         .header-area {
-            display: flex; align-items: center; width: 92%; justify-content: center;
-            position: relative; margin-top: 10px; flex-shrink: 0;
+            height: 40px; display: flex; align-items: center; justify-content: center;
+            width: 100%; position: relative; flex-shrink: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
         }
-        h1 { font-size: 24px; margin: 0; text-shadow: 0 0 10px #ff4757; letter-spacing: 3px; color: #eccc68; }
+        h1 { font-size: 22px; margin: 0; text-shadow: 0 0 10px #ff4757; letter-spacing: 2px; color: #eccc68; }
         .help-btn {
-            position: absolute; right: 0; font-size: 12px; padding: 4px 10px;
-            border: 1px solid #666; border-radius: 12px; color: #aaa;
-            background: rgba(0,0,0,0.5);
+            position: absolute; right: 10px; font-size: 12px; padding: 2px 8px;
+            border: 1px solid #666; border-radius: 10px; color: #aaa;
         }
 
-        /* --- AI 面板 --- */
+        /* 2. AI 面板 (固定高度) */
         .boss-frame {
-            width: 92%; display: flex; align-items: center; margin-top: 8px; padding: 6px;
+            width: 94%; height: 60px; margin: 5px auto;
+            display: flex; align-items: center; padding: 5px;
             background: var(--wow-panel); border: 2px solid #8C1616; border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.8); flex-shrink: 0;
         }
         .portrait {
             width: 40px; height: 40px; background: #000; border: 2px solid var(--wow-gold);
             border-radius: 4px; display: flex; align-items: center; justify-content: center;
-            font-size: 22px; margin-right: 10px; flex-shrink: 0;
+            font-size: 24px; margin-right: 10px;
         }
-        .stats { flex: 1; }
-        .name { font-size: 14px; color: var(--wow-gold); font-weight: bold; text-shadow: 1px 1px 0 #000; }
-        .bar-container { height: 8px; background: #111; border: 1px solid #333; margin-top: 3px; position: relative; }
+        .stats { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .name { font-size: 14px; color: var(--wow-gold); font-weight: bold; line-height: 1.2; }
+        .bar-container { height: 8px; background: #111; border: 1px solid #333; margin-top: 2px; position: relative; width: 100%; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease-out; }
         .mana { background: linear-gradient(90deg, #0070DE, #00C0FF); }
         .rage { background: linear-gradient(90deg, #8C1616, #FF4757); }
-        .bar-text { position: absolute; top: -2px; width: 100%; text-align: center; font-size: 9px; color: #fff; text-shadow: 1px 1px 0 #000; transform: scale(0.9); font-family: sans-serif; }
+        .bar-text { position: absolute; top: -2px; width: 100%; text-align: center; font-size: 9px; color: #fff; transform: scale(0.8); }
 
-        /* --- 棋盘区域 (核心) --- */
-        .board-wrapper {
-            margin: 5px 0; padding: 4px; background: #252525;
-            border: 3px solid var(--wow-gold); border-radius: 4px;
-            box-shadow: 0 10px 30px rgba(0,0,0,1);
-            /* 移除 flex-shrink 防止棋盘被挤压变形，改用 JS 缩放 */
-            flex-shrink: 0; 
-            transform-origin: center center;
-        }
-        canvas { display: block; cursor: crosshair; }
-        #effectLayer { position: absolute; top: 4px; left: 4px; pointer-events: none; z-index: 2; }
-
-        /* --- 战斗日志 --- */
-        .combat-log-container {
-            width: 92%; height: 0; flex-grow: 1; /* 自动填充剩余空间，最少显示一点 */
-            min-height: 40px; max-height: 100px;
-            background: var(--log-bg); border: 1px solid #444; border-radius: 4px;
-            margin-bottom: 5px; overflow-y: auto; padding: 4px;
-            font-family: sans-serif; font-size: 10px; line-height: 14px;
-            box-shadow: inset 0 0 10px #000; scroll-behavior: smooth;
-            flex-shrink: 1;
-        }
-        .log-entry { margin-bottom: 2px; }
-        .log-p1 { color: #4cd137; } .log-p2 { color: #FF4757; } .log-skill { color: var(--wow-gold); } .log-sys { color: #aaa; }
-
-        /* --- 底部玩家操作区 --- */
-        .player-zone {
+        /* 3. 棋盘区域 (弹性伸缩，核心修复) */
+        .board-flex-container {
+            flex: 1; /* 占据所有剩余空间 */
             width: 100%;
+            display: flex;
+            align-items: center; justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 5px;
+        }
+        .board-wrapper {
+            /* 保持正方形，最大不超过宽度，最大不超过高度 */
+            width: 100%; max-width: 96vw; 
+            aspect-ratio: 1/1; 
+            max-height: 100%; /* 限制高度不溢出 */
+            
+            position: relative; padding: 4px;
+            background: #252525; border: 3px solid var(--wow-gold); border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,1);
+        }
+        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+        #effectLayer { position: absolute; top: 4px; left: 4px; pointer-events: none; z-index: 2; width: calc(100% - 8px); height: calc(100% - 8px); }
+
+        /* 4. 战斗日志 (固定高度) */
+        .combat-log-container {
+            width: 94%; height: 30px; flex-shrink: 0;
+            background: var(--log-bg); border: 1px solid #444; border-radius: 4px;
+            margin: 0 auto 5px auto; overflow-y: auto; padding: 2px 6px;
+            font-family: sans-serif; font-size: 10px; line-height: 24px;
+            box-shadow: inset 0 0 10px #000; scroll-behavior: smooth;
+        }
+        .log-entry { white-space: nowrap; }
+        .log-p1 { color: #4cd137; } .log-p2 { color: #FF4757; } .log-skill { color: var(--wow-gold); }
+
+        /* 5. 底部玩家区 (固定高度，适配安全区) */
+        .player-zone {
+            width: 100%; flex-shrink: 0;
             display: flex; flex-direction: column; align-items: center;
-            background: linear-gradient(to top, #111 0%, rgba(20,20,20,0.9) 100%);
-            padding-bottom: calc(5px + var(--safe-bottom)); /* 适配 iPhone 小黑条 */
+            background: linear-gradient(to top, #000 0%, rgba(20,20,20,0.95) 100%);
             border-top: 1px solid #333;
-            flex-shrink: 0;
+            padding-bottom: calc(10px + var(--safe-bottom)); /* 底部安全区 */
         }
         
-        /* 状态提示 (不再悬浮) */
         .status-text {
-            font-size: 14px; color: #ffd700; text-shadow: 1px 1px 2px #000;
-            margin: 5px 0; height: 20px; line-height: 20px; text-align: center;
+            font-size: 12px; color: #ffd700; text-shadow: 1px 1px 2px #000;
+            margin: 2px 0; text-align: center; height: 16px;
         }
 
         .player-frame {
-            width: 92%; display: flex; align-items: center; flex-direction: row-reverse;
-            padding: 6px; margin-bottom: 8px;
+            width: 94%; height: 50px; display: flex; align-items: center; flex-direction: row-reverse;
+            padding: 5px; margin-bottom: 5px;
             background: var(--wow-panel); border: 2px solid #4cd137; border-radius: 4px;
         }
         .player-frame .name { text-align: right; color: #4cd137; }
 
-        /* 技能栏 */
-        .action-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 0 10px; width: 92%; box-sizing: border-box; }
+        .action-bar { 
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; 
+            padding: 0 10px; width: 96%; margin-bottom: 5px;
+        }
         .skill-btn {
-            aspect-ratio: 1/1; /* 保持正方形 */
-            background: #222; border: 1px solid #666; border-radius: 4px;
+            aspect-ratio: 1/1; background: #222; border: 1px solid #666; border-radius: 4px;
             position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-shadow: inset 0 0 5px #000; transition: 0.1s;
         }
@@ -118,21 +128,17 @@
             position: absolute; top: -3px; right: -3px; font-family: sans-serif; font-size: 9px; color: #fff;
             background: rgba(0,0,0,0.8); padding: 1px 3px; border-radius: 3px; border: 1px solid #444;
         }
-        
         .skill-btn:not(.ready) { filter: grayscale(100%) brightness(0.5); }
         .skill-btn.ready { border-color: #aaa; box-shadow: 0 0 5px var(--wow-gold); }
         .skill-btn.active { border-color: #FF4757; box-shadow: 0 0 10px #FF4757; animation: flash 1s infinite; }
         @keyframes flash { 0%,100% { border-color: #FF4757; } 50% { border-color: #fff; } }
 
-        /* 弹窗与遮罩 */
+        /* 弹窗 */
         .modal-mask { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 999; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .result-text { font-size: 50px; color: var(--wow-gold); text-shadow: 0 0 20px #e67e22; font-weight: bold; animation: scaleIn 0.5s; margin-bottom: 30px; }
-        .restart-btn { padding: 10px 30px; background: #8C1616; color: #fff; border: 2px solid #fff; font-size: 16px; border-radius: 4px; font-family: 'KaiTi'; }
-        @keyframes scaleIn { from {transform: scale(0);} to {transform: scale(1);} }
-        
-        /* 说明书 */
         .help-content { width: 80%; background: #181818; border: 1px solid #666; padding: 20px; border-radius: 8px; color: #ddd; font-size: 12px; line-height: 1.6; }
         .help-row { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 5px 0; }
+        .result-text { font-size: 50px; color: var(--wow-gold); text-shadow: 0 0 20px #e67e22; font-weight: bold; margin-bottom: 30px; }
+        .restart-btn { padding: 10px 30px; background: #8C1616; color: #fff; border: 2px solid #fff; font-size: 16px; border-radius: 4px; }
 
     </style>
 </head>
@@ -151,9 +157,11 @@
         </div>
     </div>
 
-    <div class="board-wrapper" id="board-wrapper">
-        <canvas id="board" width="450" height="450"></canvas>
-        <canvas id="effectLayer" width="450" height="450"></canvas>
+    <div class="board-flex-container">
+        <div class="board-wrapper" id="board-wrapper">
+            <canvas id="board" width="900" height="900"></canvas>
+            <canvas id="effectLayer" width="900" height="900"></canvas>
+        </div>
     </div>
 
     <div class="combat-log-container" id="combat-log">
@@ -188,7 +196,7 @@
             <div class="help-row"><span style="color:#e67e22">飞沙走石 (70)</span><span>移动敌子</span></div>
             <div class="help-row"><span style="color:#3498db">静如止水 (85)</span><span>额外回合</span></div>
             <div class="help-row"><span style="color:#f1c40f">东山再起 (100)</span><span>重置棋局</span></div>
-            <p style="color:#aaa; text-align:center; margin-bottom:0">点击任意处关闭</p>
+            <p style="color:#aaa; text-align:center; margin-bottom:0; margin-top:10px;">点击任意处关闭</p>
         </div>
     </div>
 
@@ -198,54 +206,23 @@
     </div>
 
 <script>
+    // 注意：Canvas 内部由 450 改为 900 以支持高清屏，逻辑坐标需转换
     const canvas = document.getElementById('board');
     const ctx = canvas.getContext('2d');
     const effCanvas = document.getElementById('effectLayer');
     const effCtx = effCanvas.getContext('2d');
     const logBox = document.getElementById('combat-log');
     
-    const GRID = 15, CELL = 30, PADDING = 15;
+    const GRID = 15;
+    const CANVAS_SIZE = 900; // 内部高分辨率
+    const CELL = CANVAS_SIZE / GRID; // 60px
+    const PADDING = CELL / 2; // 30px
+
     let board = [], turn = 1, turnCount = 1, mp = { 1: 30, 2: 30 };
     let gameOver = false, history = [], currentSkill = null, moveSource = null;
     const MP_REGEN_PLAYER = 5, MP_REGEN_AI = 8;
     const COSTS = { 1: 30, 2: 70, 3: 85, 4: 55, 5: 100 };
 
-    // --- 智能屏幕适配 ---
-    function resizeBoard() {
-        const wrapper = document.getElementById('board-wrapper');
-        const headerH = document.querySelector('.header-area').offsetHeight;
-        const bossH = document.querySelector('.boss-frame').offsetHeight;
-        const playerH = document.querySelector('.player-zone').offsetHeight;
-        const screenW = window.innerWidth;
-        const screenH = window.innerHeight;
-        
-        // 计算留给棋盘的最大高度
-        const availableH = screenH - headerH - bossH - playerH - 40; // 40px buffer
-        const baseSize = 464; // 棋盘 CSS 宽度 (450+borders)
-
-        // 计算缩放比例：取 宽度缩放 和 高度缩放 的较小值
-        let scale = Math.min(
-            (screenW - 20) / baseSize, // 宽度限制
-            availableH / baseSize      // 高度限制
-        );
-        
-        if (scale < 1) {
-            wrapper.style.transform = `scale(${scale})`;
-            // 调整 margin 以消除缩放产生的空白
-            const marginY = (1 - scale) * baseSize / 2;
-            wrapper.style.marginTop = `-${marginY}px`;
-            wrapper.style.marginBottom = `-${marginY}px`;
-        } else {
-            wrapper.style.transform = 'scale(1)';
-            wrapper.style.marginTop = '5px';
-            wrapper.style.marginBottom = '5px';
-        }
-    }
-    window.addEventListener('resize', resizeBoard);
-    // 初始化时延时执行，确保 DOM 渲染完毕
-    setTimeout(resizeBoard, 100);
-
-    // --- 游戏逻辑 ---
     function initGame(keepMP = false) {
         board = Array(GRID).fill().map(() => Array(GRID).fill(0));
         history = []; turn = 1; turnCount = 1;
@@ -271,63 +248,70 @@
         logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // --- 绘图 ---
+    // --- 绘图 (适配高分屏) ---
     function drawBoard() {
-        ctx.fillStyle = "#eebb77"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath(); ctx.strokeStyle = "#594f43"; ctx.lineWidth = 1;
-        for(let i=0; i<GRID; i++){ ctx.moveTo(PADDING+i*CELL, PADDING); ctx.lineTo(PADDING+i*CELL, PADDING+(GRID-1)*CELL); ctx.moveTo(PADDING, PADDING+i*CELL); ctx.lineTo(PADDING+(GRID-1)*CELL, PADDING+i*CELL); } ctx.stroke();
-        [3,7,11].forEach(r=>[3,7,11].forEach(c=>{ ctx.beginPath(); ctx.arc(PADDING+c*CELL, PADDING+r*CELL, 3, 0, 2*Math.PI); ctx.fillStyle="#2c3e50"; ctx.fill(); }));
+        ctx.fillStyle = "#eebb77"; ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+        ctx.beginPath(); ctx.strokeStyle = "#594f43"; ctx.lineWidth = 2; // 线条加粗
+        for(let i=0; i<GRID; i++){
+            ctx.moveTo(PADDING+i*CELL, PADDING); ctx.lineTo(PADDING+i*CELL, PADDING+(GRID-1)*CELL);
+            ctx.moveTo(PADDING, PADDING+i*CELL); ctx.lineTo(PADDING+(GRID-1)*CELL, PADDING+i*CELL);
+        }
+        ctx.stroke();
+        [3,7,11].forEach(r=>[3,7,11].forEach(c=>{
+            ctx.beginPath(); ctx.arc(PADDING+c*CELL, PADDING+r*CELL, 6, 0, 2*Math.PI); ctx.fillStyle="#2c3e50"; ctx.fill();
+        }));
         for(let r=0; r<GRID; r++) for(let c=0; c<GRID; c++) if(board[r][c] !== 0) drawPiece(r, c, board[r][c]);
-        if(moveSource) { ctx.beginPath(); ctx.arc(PADDING+moveSource.c*CELL, PADDING+moveSource.r*CELL, 15, 0, 2*Math.PI); ctx.strokeStyle="#00C0FF"; ctx.lineWidth=3; ctx.stroke(); }
-        if(history.length > 0) { let last = history[history.length-1]; ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(PADDING+last.c*CELL, PADDING+last.r*CELL, 3, 0, 2*Math.PI); ctx.fill(); }
+        
+        if(moveSource) {
+            ctx.beginPath(); ctx.arc(PADDING+moveSource.c*CELL, PADDING+moveSource.r*CELL, 28, 0, 2*Math.PI);
+            ctx.strokeStyle="#00C0FF"; ctx.lineWidth=6; ctx.stroke();
+        }
+        if(history.length > 0) {
+            let last = history[history.length-1];
+            ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(PADDING+last.c*CELL, PADDING+last.r*CELL, 6, 0, 2*Math.PI); ctx.fill();
+        }
     }
+
     function drawPiece(r, c, type) {
-        const x = PADDING + c*CELL, y = PADDING + r*CELL; ctx.beginPath(); ctx.arc(x, y, 13, 0, 2*Math.PI);
-        const grad = ctx.createRadialGradient(x-3, y-3, 2, x, y, 13);
-        if(type===1){ grad.addColorStop(0,"#333"); grad.addColorStop(1,"#000"); } else { grad.addColorStop(0,"#fff"); grad.addColorStop(1,"#ddd"); }
+        const x = PADDING + c*CELL, y = PADDING + r*CELL;
+        ctx.beginPath(); ctx.arc(x, y, 26, 0, 2*Math.PI); // 棋子半径放大
+        const grad = ctx.createRadialGradient(x-10, y-10, 5, x, y, 26);
+        if(type===1){ grad.addColorStop(0,"#444"); grad.addColorStop(1,"#000"); }
+        else { grad.addColorStop(0,"#fff"); grad.addColorStop(1,"#ddd"); }
         ctx.fillStyle = grad; ctx.fill();
     }
 
-    // --- 技能 ---
-    window.useSkill = function(id) {
-        if(turn !== 1 || gameOver) return;
-        if(mp[1] < COSTS[id]) { updateStatus("内力不足！", "#FF4757"); return; }
-        if(currentSkill === id && !moveSource) { currentSkill = null; updateStatus("取消施法"); updateUI(); return; }
-        moveSource = null; 
-        if(id === 1) { if(history.length < 2) { updateStatus("无棋可悔", "#FF4757"); return; } mp[1] -= COSTS[1]; undo(); undo(); drawBoard(); updateUI(); addLog(`施放 <span class="log-skill">时光倒流</span>`, 'p1'); playVisualEffect(1, 7, 7); return; }
-        if(id === 3) { mp[1] -= COSTS[3]; updateUI(); updateStatus("额外回合！", "#00C0FF"); addLog(`施放 <span class="log-skill">静如止水</span>`, 'p1'); playVisualEffect(3, 7, 7); return; }
-        if(id === 5) { if(confirm("消耗全部内力重置？")) { mp[1] -= COSTS[5]; addLog(`施放 <span class="log-skill">东山再起</span>`, 'p1'); playVisualEffect(5, 7, 7); setTimeout(() => initGame(true), 500); } return; }
-        currentSkill = id; updateUI();
-        if(id === 2) updateStatus("选择：敌方棋子 -> 空位");
-        if(id === 4) updateStatus("选择：爆破中心点");
-    }
-    function undo() { if(history.length > 0) { let m = history.pop(); board[m.r][m.c] = 0; } }
-
+    // --- 交互核心修复 ---
     canvas.addEventListener('click', e => {
         if(gameOver || turn !== 1) return;
-        const rect = canvas.getBoundingClientRect();
-        // 获取当前的缩放比例
-        const computedStyle = window.getComputedStyle(document.getElementById('board-wrapper'));
-        const transform = computedStyle.getPropertyValue('transform');
-        let scale = 1;
-        if(transform && transform !== 'none') {
-            const values = transform.split('(')[1].split(')')[0].split(',');
-            scale = parseFloat(values[0]);
-        }
         
-        const c = Math.round(((e.clientX - rect.left) / scale - PADDING) / CELL);
-        const r = Math.round(((e.clientY - rect.top) / scale - PADDING) / CELL);
+        // 获取 Canvas 在屏幕上的实际显示矩形
+        const rect = canvas.getBoundingClientRect();
+        
+        // 计算缩放比：Canvas 内部宽度 (900) / 实际显示宽度
+        const scaleX = CANVAS_SIZE / rect.width;
+        const scaleY = CANVAS_SIZE / rect.height;
+        
+        // 转换坐标
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        
+        const c = Math.round((x - PADDING) / CELL);
+        const r = Math.round((y - PADDING) / CELL);
         
         if(r<0||r>=GRID||c<0||c>=GRID) return;
 
+        // 技能逻辑
         if(currentSkill) {
             if(currentSkill === 2) {
                 if(!moveSource) {
-                    if(board[r][c] === 2) { moveSource = {r,c}; updateStatus("选择目标空位"); drawBoard(); } else updateStatus("只能选白子", "#FF4757");
+                    if(board[r][c] === 2) { moveSource = {r,c}; updateStatus("选择目标空位"); drawBoard(); } 
+                    else updateStatus("只能选白子", "#FF4757");
                 } else {
                     if(board[r][c] === 0) {
                         mp[1] -= COSTS[2]; board[moveSource.r][moveSource.c] = 0; board[r][c] = 2;
-                        history = []; addLog(`施放 <span class="log-skill">飞沙走石</span>`, 'p1'); playVisualEffect(2, moveSource.r, moveSource.c, r, c);
+                        history = []; addLog(`施放 <span class="log-skill">飞沙走石</span>`, 'p1');
+                        playVisualEffect(2, moveSource.r, moveSource.c, r, c);
                         currentSkill = null; moveSource = null; drawBoard(); updateUI();
                         if(checkWin(r, c, 2)) endGame(2); else nextTurn();
                     } else updateStatus("必须是空位", "#FF4757");
@@ -336,15 +320,33 @@
             if(currentSkill === 4) {
                 mp[1] -= COSTS[4];
                 [[0,0],[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc]) => { let nr=r+dr, nc=c+dc; if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID) board[nr][nc] = 0; });
-                history = []; addLog(`施放 <span class="log-skill">力拔山兮</span>`, 'p1'); playVisualEffect(4, r, c);
-                currentSkill = null; drawBoard(); updateUI(); nextTurn(); return;
+                history = []; addLog(`施放 <span class="log-skill">力拔山兮</span>`, 'p1');
+                playVisualEffect(4, r, c); currentSkill = null; drawBoard(); updateUI(); nextTurn(); return;
             }
         }
+        // 普通落子
         if(board[r][c] === 0) {
             board[r][c] = 1; history.push({r,c,p:1}); drawBoard(); addLog(`落子 (${r+1},${c+1})`, 'p1');
             if(checkWin(r, c, 1)) { endGame(1); return; } nextTurn();
         }
     });
+
+    // --- 技能 ---
+    window.useSkill = function(id) {
+        if(turn !== 1 || gameOver) return;
+        if(mp[1] < COSTS[id]) { updateStatus("内力不足！", "#FF4757"); return; }
+        if(currentSkill === id && !moveSource) { currentSkill = null; updateStatus("取消施法"); updateUI(); return; }
+        
+        moveSource = null; 
+        if(id === 1) { if(history.length < 2) { updateStatus("无棋可悔"); return; } mp[1] -= COSTS[1]; undo(); undo(); drawBoard(); updateUI(); addLog(`施放 <span class="log-skill">时光倒流</span>`, 'p1'); playVisualEffect(1, 7, 7); return; }
+        if(id === 3) { mp[1] -= COSTS[3]; updateUI(); updateStatus("额外回合！", "#00C0FF"); addLog(`施放 <span class="log-skill">静如止水</span>`, 'p1'); playVisualEffect(3, 7, 7); return; }
+        if(id === 5) { if(confirm("消耗全部内力重置？")) { mp[1] -= COSTS[5]; addLog(`施放 <span class="log-skill">东山再起</span>`, 'p1'); playVisualEffect(5, 7, 7); setTimeout(() => initGame(true), 500); } return; }
+        
+        currentSkill = id; updateUI();
+        if(id === 2) updateStatus("选择：敌方棋子 -> 空位");
+        if(id === 4) updateStatus("选择：爆破中心点");
+    }
+    function undo() { if(history.length > 0) { let m = history.pop(); board[m.r][m.c] = 0; } }
 
     function nextTurn() {
         turn = turn === 1 ? 2 : 1; if(turn===1) turnCount++;
@@ -352,7 +354,7 @@
         updateUI(); if(turn === 2) setTimeout(aiTurn, 500);
     }
 
-    // --- AI V5.0 ---
+    // --- AI ---
     function aiTurn() {
         updateStatus("魔头思考中...");
         let aiThree = findOpenThree(board, 2);
@@ -363,14 +365,11 @@
         }
         let threat = findThreat(board, 1); 
         if (threat && threat.score >= 8000 && mp[2] >= COSTS[4]) {
-             // 简单VCF防守检查
             let canBlock = findForcedBlock(board, 1);
             if (!canBlock || mp[2] > 80) {
                 addLog(`施放 <span class="log-skill">力拔山兮</span> (解围)`, 'p2');
                 mp[2] -= COSTS[4];
-                [[0,0],[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc]) => {
-                    let nr=threat.r+dr, nc=threat.c+dc; if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID) board[nr][nc] = 0;
-                });
+                [[0,0],[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc]) => { let nr=threat.r+dr, nc=threat.c+dc; if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID) board[nr][nc] = 0; });
                 history = []; playVisualEffect(4, threat.r, threat.c);
                 drawBoard(); updateUI();
                 turn = 1; turnCount++; mp[1] = Math.min(100, mp[1] + MP_REGEN_PLAYER); updateUI();
@@ -387,31 +386,23 @@
         else if (changeTurn) { turn = 1; turnCount++; mp[1] = Math.min(100, mp[1] + MP_REGEN_PLAYER); updateUI(); updateStatus("请侠客落子"); }
     }
 
-    // 辅助函数 (AI, 检查, 特效)
+    // AI Utils
     function findOpenThree(bd, p) { for(let r=0; r<GRID; r++) for(let c=0; c<GRID; c++) { if(bd[r][c]===0 && evaluatePoint(bd,r,c,p) >= 3000) return {r,c}; } return null; }
     function findThreat(bd, p) {
-        let m=0,t=null; for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++) if(bd[r][c]===0){
-            bd[r][c]=p; let s=evaluatePoint(bd,r,c,p); bd[r][c]=0; if(s>m){m=s;t={r,c,score:s};}
-        } 
+        let m=0,t=null; for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++) if(bd[r][c]===0){ bd[r][c]=p; let s=evaluatePoint(bd,r,c,p); bd[r][c]=0; if(s>m){m=s;t={r,c,score:s};} } 
         if(m>=8000){ 
-            // 尝试找威胁棋子
-            let target = null, maxChain = 0;
-            for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++){
-                let nr=t.r+i, nc=t.c+j;
-                if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID&&bd[nr][nc]===p) { target={r:nr,c:nc}; break;}
-            }
+            let target = null;
+            for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++){ let nr=t.r+i, nc=t.c+j; if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID&&bd[nr][nc]===p) { target={r:nr,c:nc}; break;} }
             return target ? {r:target.r,c:target.c,score:m} : t;
-        }
-        return null;
+        } return null;
     }
     function solveVCF(bd,p,d) { if(d<=0)return null; let ms=findFourMoves(bd,p); for(let m of ms){ bd[m.r][m.c]=p; if(checkWinSimple(bd,m.r,m.c,p)){bd[m.r][m.c]=0;return m;} let b=findForcedBlock(bd,p); if(b){bd[b.r][b.c]=(p===1?2:1);let n=solveVCF(bd,p,d-1);bd[b.r][b.c]=0;bd[m.r][m.c]=0;if(n)return m;} else{bd[m.r][m.c]=0;return m;} bd[m.r][m.c]=0; } return null; }
     function findFourMoves(bd,p) { let ms=[]; for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++)if(bd[r][c]===0&&evaluatePoint(bd,r,c,p)>=10000)ms.push({r,c}); return ms;}
-    function findForcedBlock(bd,atk) { for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++)if(bd[r][c]===0){bd[r][c]=atk;let w=checkWinSimple(bd,r,c,atk);bd[r][c]=0;if(w)return{r,c};} return null;}
-    function getBestMove() { let b=null,m=-Infinity; for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++)if(board[r][c]===0){ let s=evaluatePoint(board,r,c,2)+evaluatePoint(board,r,c,1)*1.2; if(s>m){m=s;b={r,c};} } if(!b)b={r:7,c:7}; return b; }
+    function findForcedBlock(bd,atk) { for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++)if(bd[r][c]===0) { bd[r][c]=atk; let w=checkWinSimple(bd,r,c,atk); bd[r][c]=0; if(w) return {r,c}; } return null; }
+    function getBestMove() { let b=null,m=-Infinity; for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++)if(board[r][c]===0) { let s=evaluatePoint(board,r,c,2)+evaluatePoint(board,r,c,1)*1.2; if(s>m){m=s;b={r,c};} } if(!b)b={r:7,c:7}; return b; }
     function evaluatePoint(bd,r,c,p) { let s=0; const ds=[[1,0],[0,1],[1,1],[1,-1]]; for(let [dr,dc] of ds){ let k=1,e=0,i=1; while(bd[r+i*dr]?.[c+i*dc]===p){k++;i++} if(bd[r+i*dr]?.[c+i*dc]===0)e++; i=1; while(bd[r-i*dr]?.[c-i*dc]===p){k++;i++} if(bd[r-i*dr]?.[c-i*dc]===0)e++; if(k>=5)s+=100000;else if(k==4)s+=(e==2?10000:2000);else if(k==3)s+=(e==2?1000:100);else if(k==2&&e==2)s+=50; } return s; }
     function checkWin(r,c,p){return checkWinSimple(board,r,c,p);}
     function checkWinSimple(bd,r,c,p){ const ds=[[1,0],[0,1],[1,1],[1,-1]]; for(let [dr,dc] of ds){ let k=1,i=1; while(bd[r+i*dr]?.[c+i*dc]===p){k++;i++} i=1; while(bd[r-i*dr]?.[c-i*dc]===p){k++;i++} if(k>=5)return true; } return false; }
-    
     function endGame(w) {
         gameOver=true; const mask=document.getElementById('resultOverlay'); const txt=document.getElementById('resultText');
         mask.style.display='flex'; txt.innerText=w===1?"胜天半子":"胜败兵家"; txt.style.color=w===1?"#ffd700":"#aaa";
@@ -423,18 +414,14 @@
         for(let i=1;i<=5;i++){ let b=document.getElementById('btn-s'+i); b.className="skill-btn"; if(mp[1]>=COSTS[i]) b.classList.add('ready'); if(currentSkill===i) b.classList.add('active'); }
     }
     function playVisualEffect(skillId, r, c, tr=0, tc=0) {
-        const x = PADDING + c*CELL, y = PADDING + r*CELL; effCtx.clearRect(0,0,450,450);
-        if (skillId === 1) { let angle = 0; const loop = () => { effCtx.clearRect(0,0,450,450); effCtx.save(); effCtx.translate(225, 225); effCtx.rotate(angle); for(let i=0; i<10; i++) { effCtx.beginPath(); effCtx.arc(i*15, 0, 5+i, 0, Math.PI*2); effCtx.fillStyle = `rgba(155, 89, 182, ${1-i/10})`; effCtx.fill(); } effCtx.restore(); angle -= 0.2; if(angle > -6) requestAnimationFrame(loop); else effCtx.clearRect(0,0,450,450); }; loop(); }
-        else if (skillId === 2) { const tx = PADDING + tc*CELL, ty = PADDING + tr*CELL; let cx = x, cy = y, steps = 20, cur = 0; const dx = (tx-x)/steps, dy = (ty-y)/steps; const loop = () => { effCtx.clearRect(0,0,450,450); effCtx.beginPath(); effCtx.moveTo(x,y); effCtx.lineTo(cx,cy); effCtx.strokeStyle = "#e67e22"; effCtx.lineWidth = 3; effCtx.stroke(); effCtx.beginPath(); effCtx.arc(cx, cy, 8, 0, Math.PI*2); effCtx.fillStyle = "#d35400"; effCtx.fill(); cx += dx; cy += dy; cur++; if(cur <= steps) requestAnimationFrame(loop); else { effCtx.clearRect(0,0,450,450); effCtx.beginPath(); effCtx.arc(tx, ty, 20, 0, Math.PI*2); effCtx.fillStyle = "rgba(230, 126, 34, 0.5)"; effCtx.fill(); setTimeout(()=>effCtx.clearRect(0,0,450,450), 200); } }; loop(); }
-        else if (skillId === 3) { effCtx.fillStyle = "rgba(0, 192, 255, 0.3)"; effCtx.fillRect(0,0,450,450); setTimeout(()=>effCtx.clearRect(0,0,450,450), 300); }
-        else if (skillId === 4) { let r1 = 0; const loop = () => { effCtx.clearRect(0,0,450,450); effCtx.beginPath(); effCtx.arc(x, y, r1, 0, Math.PI*2); effCtx.fillStyle = `rgba(255, 71, 87, ${1-r1/60})`; effCtx.fill(); r1 += 4; if(r1 < 60) requestAnimationFrame(loop); else effCtx.clearRect(0,0,450,450); }; loop(); }
-        else if (skillId === 5) { let alpha = 0, up = true; const loop = () => { effCtx.clearRect(0,0,450,450); effCtx.fillStyle = `rgba(255, 215, 0, ${alpha})`; effCtx.fillRect(0,0,450,450); if(up) { alpha+=0.05; if(alpha>=0.8) up=false; } else { alpha-=0.05; } if(alpha > 0) requestAnimationFrame(loop); }; loop(); }
+        const x = PADDING + c*CELL, y = PADDING + r*CELL; effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+        if (skillId === 1) { let angle = 0; const loop = () => { effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE); effCtx.save(); effCtx.translate(CANVAS_SIZE/2, CANVAS_SIZE/2); effCtx.rotate(angle); for(let i=0; i<10; i++) { effCtx.beginPath(); effCtx.arc(i*30, 0, 10+i, 0, Math.PI*2); effCtx.fillStyle = `rgba(155, 89, 182, ${1-i/10})`; effCtx.fill(); } effCtx.restore(); angle -= 0.2; if(angle > -6) requestAnimationFrame(loop); else effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE); }; loop(); }
+        else if (skillId === 2) { const tx = PADDING + tc*CELL, ty = PADDING + tr*CELL; let cx = x, cy = y, steps = 20, cur = 0; const dx = (tx-x)/steps, dy = (ty-y)/steps; const loop = () => { effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE); effCtx.beginPath(); effCtx.moveTo(x,y); effCtx.lineTo(cx,cy); effCtx.strokeStyle = "#e67e22"; effCtx.lineWidth = 6; effCtx.stroke(); effCtx.beginPath(); effCtx.arc(cx, cy, 16, 0, Math.PI*2); effCtx.fillStyle = "#d35400"; effCtx.fill(); cx += dx; cy += dy; cur++; if(cur <= steps) requestAnimationFrame(loop); else { effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE); effCtx.beginPath(); effCtx.arc(tx, ty, 40, 0, Math.PI*2); effCtx.fillStyle = "rgba(230, 126, 34, 0.5)"; effCtx.fill(); setTimeout(()=>effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE), 200); } }; loop(); }
+        else if (skillId === 3) { effCtx.fillStyle = "rgba(0, 192, 255, 0.3)"; effCtx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE); setTimeout(()=>effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE), 300); }
+        else if (skillId === 4) { let r1 = 0; const loop = () => { effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE); effCtx.beginPath(); effCtx.arc(x, y, r1, 0, Math.PI*2); effCtx.fillStyle = `rgba(255, 71, 87, ${1-r1/120})`; effCtx.fill(); r1 += 8; if(r1 < 120) requestAnimationFrame(loop); else effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE); }; loop(); }
+        else if (skillId === 5) { let alpha = 0, up = true; const loop = () => { effCtx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE); effCtx.fillStyle = `rgba(255, 215, 0, ${alpha})`; effCtx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE); if(up) { alpha+=0.05; if(alpha>=0.8) up=false; } else { alpha-=0.05; } if(alpha > 0) requestAnimationFrame(loop); }; loop(); }
     }
-
-    function toggleHelp() {
-        const modal = document.getElementById('helpModal');
-        modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
-    }
+    function toggleHelp() { const modal = document.getElementById('helpModal'); modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex'; }
     initGame();
 </script>
 </body>
