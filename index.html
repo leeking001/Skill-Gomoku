@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>五子棋：诸神之战</title>
+    <title>五子棋：诸神之战 (专业版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -18,27 +18,29 @@
         * { box-sizing: border-box; }
 
         html, body {
-            margin: 0; padding: 0; width: 100%; height: 100dvh; /* 强制满屏 */
+            margin: 0; padding: 0; width: 100%; height: 100dvh;
             overflow: hidden; user-select: none;
             font-family: "KaiTi", "STKaiti", serif;
             background-color: #050505; color: #eee;
-            display: flex; flex-direction: column; /* 垂直排列 */
+            display: flex; flex-direction: column;
             background-image: radial-gradient(circle at 50% 30%, #2a2a2a 0%, #000 80%);
         }
 
-        /* 1. 顶部标题 (固定高度) */
+        /* 1. 顶部标题与控制栏 */
         .header-area {
             height: 40px; display: flex; align-items: center; justify-content: center;
             width: 100%; position: relative; flex-shrink: 0;
             background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
         }
         h1 { font-size: 22px; margin: 0; text-shadow: 0 0 10px #ff4757; letter-spacing: 2px; color: #eccc68; }
-        .help-btn {
-            position: absolute; right: 10px; font-size: 12px; padding: 2px 8px;
-            border: 1px solid #666; border-radius: 10px; color: #aaa;
+        .top-btns { position: absolute; right: 10px; display: flex; gap: 10px; }
+        .top-btn {
+            font-size: 12px; padding: 2px 8px; border: 1px solid #666; border-radius: 10px; color: #aaa; cursor: pointer; background: rgba(0,0,0,0.5);
         }
+        #music-btn.playing { color: var(--wow-gold); border-color: var(--wow-gold); animation: pulse-music 2s infinite; }
+        @keyframes pulse-music { 0% { box-shadow: 0 0 0 0 rgba(248, 183, 0, 0.4); } 70% { box-shadow: 0 0 0 5px rgba(248, 183, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 183, 0, 0); } }
 
-        /* 2. AI 面板 (固定高度) */
+        /* 2. AI 面板 */
         .boss-frame {
             width: 94%; height: 60px; margin: 5px auto;
             display: flex; align-items: center; padding: 5px;
@@ -58,22 +60,13 @@
         .rage { background: linear-gradient(90deg, #8C1616, #FF4757); }
         .bar-text { position: absolute; top: -2px; width: 100%; text-align: center; font-size: 9px; color: #fff; transform: scale(0.8); }
 
-        /* 3. 棋盘区域 (弹性伸缩，核心修复) */
+        /* 3. 棋盘区域 */
         .board-flex-container {
-            flex: 1; /* 占据所有剩余空间 */
-            width: 100%;
-            display: flex;
-            align-items: center; justify-content: center;
-            position: relative;
-            overflow: hidden;
-            padding: 5px;
+            flex: 1; width: 100%; display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; padding: 5px;
         }
         .board-wrapper {
-            /* 保持正方形，最大不超过宽度，最大不超过高度 */
-            width: 100%; max-width: 96vw; 
-            aspect-ratio: 1/1; 
-            max-height: 100%; /* 限制高度不溢出 */
-            
+            width: 100%; max-width: 96vw; aspect-ratio: 1/1; max-height: 100%;
             position: relative; padding: 4px;
             background: #252525; border: 3px solid var(--wow-gold); border-radius: 4px;
             box-shadow: 0 10px 30px rgba(0,0,0,1);
@@ -81,7 +74,7 @@
         canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
         #effectLayer { position: absolute; top: 4px; left: 4px; pointer-events: none; z-index: 2; width: calc(100% - 8px); height: calc(100% - 8px); }
 
-        /* 4. 战斗日志 (固定高度) */
+        /* 4. 战斗日志 */
         .combat-log-container {
             width: 94%; height: 30px; flex-shrink: 0;
             background: var(--log-bg); border: 1px solid #444; border-radius: 4px;
@@ -90,33 +83,21 @@
             box-shadow: inset 0 0 10px #000; scroll-behavior: smooth;
         }
         .log-entry { white-space: nowrap; }
-        .log-p1 { color: #4cd137; } .log-p2 { color: #FF4757; } .log-skill { color: var(--wow-gold); }
+        .log-p1 { color: #4cd137; } .log-p2 { color: #FF4757; } .log-skill { color: var(--wow-gold); } .log-forbidden { color: #e74c3c; font-weight: bold; }
 
-        /* 5. 底部玩家区 (固定高度，适配安全区) */
+        /* 5. 底部玩家区 */
         .player-zone {
-            width: 100%; flex-shrink: 0;
-            display: flex; flex-direction: column; align-items: center;
+            width: 100%; flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
             background: linear-gradient(to top, #000 0%, rgba(20,20,20,0.95) 100%);
-            border-top: 1px solid #333;
-            padding-bottom: calc(10px + var(--safe-bottom)); /* 底部安全区 */
+            border-top: 1px solid #333; padding-bottom: calc(10px + var(--safe-bottom));
         }
-        
-        .status-text {
-            font-size: 12px; color: #ffd700; text-shadow: 1px 1px 2px #000;
-            margin: 2px 0; text-align: center; height: 16px;
-        }
-
+        .status-text { font-size: 12px; color: #ffd700; text-shadow: 1px 1px 2px #000; margin: 2px 0; text-align: center; height: 16px; }
         .player-frame {
             width: 94%; height: 50px; display: flex; align-items: center; flex-direction: row-reverse;
-            padding: 5px; margin-bottom: 5px;
-            background: var(--wow-panel); border: 2px solid #4cd137; border-radius: 4px;
+            padding: 5px; margin-bottom: 5px; background: var(--wow-panel); border: 2px solid #4cd137; border-radius: 4px;
         }
         .player-frame .name { text-align: right; color: #4cd137; }
-
-        .action-bar { 
-            display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; 
-            padding: 0 10px; width: 96%; margin-bottom: 5px;
-        }
+        .action-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 0 10px; width: 96%; margin-bottom: 5px; }
         .skill-btn {
             aspect-ratio: 1/1; background: #222; border: 1px solid #666; border-radius: 4px;
             position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -124,10 +105,7 @@
         }
         .skill-icon-text { font-size: 18px; margin-bottom: 2px; }
         .skill-name { font-size: 9px; color: #ddd; transform: scale(0.8); white-space: nowrap; }
-        .cost-badge {
-            position: absolute; top: -3px; right: -3px; font-family: sans-serif; font-size: 9px; color: #fff;
-            background: rgba(0,0,0,0.8); padding: 1px 3px; border-radius: 3px; border: 1px solid #444;
-        }
+        .cost-badge { position: absolute; top: -3px; right: -3px; font-family: sans-serif; font-size: 9px; color: #fff; background: rgba(0,0,0,0.8); padding: 1px 3px; border-radius: 3px; border: 1px solid #444; }
         .skill-btn:not(.ready) { filter: grayscale(100%) brightness(0.5); }
         .skill-btn.ready { border-color: #aaa; box-shadow: 0 0 5px var(--wow-gold); }
         .skill-btn.active { border-color: #FF4757; box-shadow: 0 0 10px #FF4757; animation: flash 1s infinite; }
@@ -135,24 +113,34 @@
 
         /* 弹窗 */
         .modal-mask { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 999; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .help-content { width: 80%; background: #181818; border: 1px solid #666; padding: 20px; border-radius: 8px; color: #ddd; font-size: 12px; line-height: 1.6; }
+        .help-content { width: 80%; background: #181818; border: 1px solid #666; padding: 20px; border-radius: 8px; color: #ddd; font-size: 12px; line-height: 1.6; max-height: 80vh; overflow-y: auto; }
         .help-row { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 5px 0; }
-        .result-text { font-size: 50px; color: var(--wow-gold); text-shadow: 0 0 20px #e67e22; font-weight: bold; margin-bottom: 30px; }
+        .help-section { margin-top: 15px; border-top: 2px solid #333; padding-top: 10px; }
+        .help-forbidden { color: #e74c3c; font-weight: bold; }
+        .result-text { font-size: 50px; color: var(--wow-gold); text-shadow: 0 0 20px #e67e22; font-weight: bold; margin-bottom: 30px; text-align: center; }
         .restart-btn { padding: 10px 30px; background: #8C1616; color: #fff; border: 2px solid #fff; font-size: 16px; border-radius: 4px; }
 
     </style>
 </head>
 <body>
 
+    <audio id="bgm" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/11/22/audio_febc508520.mp3?filename=chinese-fantasy- Guzheng-126666.mp3" type="audio/mpeg">
+        你的浏览器不支持 audio 标签。
+    </audio>
+
     <div class="header-area">
         <h1>诸神之战</h1>
-        <div class="help-btn" onclick="toggleHelp()">技能说明</div>
+        <div class="top-btns">
+            <div class="top-btn" id="music-btn" onclick="toggleMusic()">🎵 音乐</div>
+            <div class="top-btn" onclick="toggleHelp()">📘 说明</div>
+        </div>
     </div>
 
     <div class="boss-frame">
         <div class="portrait">👹</div>
         <div class="stats">
-            <div class="name">魔头 (AI)</div>
+            <div class="name">魔头 (AI) <span style="font-size:10px;color:#aaa">无禁手</span></div>
             <div class="bar-container"><div class="bar-fill rage" id="p2-mp"></div><div class="bar-text"><span id="p2-val">0</span> / 100</div></div>
         </div>
     </div>
@@ -165,16 +153,16 @@
     </div>
 
     <div class="combat-log-container" id="combat-log">
-        <div class="log-entry"><span class="log-sys">战斗开始...</span></div>
+        <div class="log-entry"><span class="log-sys">战斗开始... (点击屏幕开启音乐)</span></div>
     </div>
 
     <div class="player-zone">
-        <div class="status-text" id="status-text">请侠客落子</div>
+        <div class="status-text" id="status-text">请侠客落子 (黑方有禁手)</div>
 
         <div class="player-frame">
             <div class="portrait">🥷</div>
             <div class="stats">
-                <div class="name">侠客 (你)</div>
+                <div class="name">侠客 (你) <span style="font-size:10px;color:#e74c3c">禁手规则</span></div>
                 <div class="bar-container"><div class="bar-fill mana" id="p1-mp"></div><div class="bar-text"><span id="p1-val">0</span> / 100</div></div>
             </div>
         </div>
@@ -190,47 +178,91 @@
 
     <div class="modal-mask" id="helpModal" onclick="toggleHelp()">
         <div class="help-content" onclick="event.stopPropagation()">
-            <h3 style="color:#eccc68; margin-top:0; text-align:center">技能手册</h3>
-            <div class="help-row"><span style="color:#9b59b6">时光倒流 (30)</span><span>悔棋一步</span></div>
-            <div class="help-row"><span style="color:#e74c3c">力拔山兮 (55)</span><span>炸毁十字范围</span></div>
-            <div class="help-row"><span style="color:#e67e22">飞沙走石 (70)</span><span>移动敌子</span></div>
-            <div class="help-row"><span style="color:#3498db">静如止水 (85)</span><span>额外回合</span></div>
-            <div class="help-row"><span style="color:#f1c40f">东山再起 (100)</span><span>重置棋局</span></div>
-            <p style="color:#aaa; text-align:center; margin-bottom:0; margin-top:10px;">点击任意处关闭</p>
+            <h3 style="color:#eccc68; margin-top:0; text-align:center">游戏说明书</h3>
+            
+            <div class="help-section">
+                <h4 style="color:#4cd137; margin:5px 0;">🥷 黑方(你) 规则：禁手限制</h4>
+                <div style="color:#aaa; font-size:11px;">为了平衡先行优势，黑方受到严格限制。</div>
+                <div class="help-row"><span class="help-forbidden">长连禁手</span><span>连成6子及以上，直接判负。</span></div>
+                <div class="help-row"><span class="help-forbidden">三三禁手</span><span>同时形成两个活三，判负。</span></div>
+                <div class="help-row"><span class="help-forbidden">四四禁手</span><span>同时形成两个四，判负。</span></div>
+                <div style="color:#eccc68; font-size:11px; margin-top:5px;">*若落子同时形成五连和禁手(非长连)，算五连胜。</div>
+            </div>
+
+            <div class="help-section">
+                 <h4 style="color:#FF4757; margin:5px 0;">👹 白方(AI) 规则：无禁手</h4>
+                 <div style="color:#aaa; font-size:11px;">白方无任何限制，连成5子或以上即获胜。</div>
+            </div>
+
+            <div class="help-section">
+                <h4 style="color:#eccc68; margin:5px 0;">技能手册</h4>
+                <div class="help-row"><span style="color:#9b59b6">时光倒流 (30)</span><span>悔棋一步</span></div>
+                <div class="help-row"><span style="color:#e74c3c">力拔山兮 (55)</span><span>炸毁十字范围</span></div>
+                <div class="help-row"><span style="color:#e67e22">飞沙走石 (70)</span><span>移动敌子</span></div>
+                <div class="help-row"><span style="color:#3498db">静如止水 (85)</span><span>额外回合</span></div>
+                <div class="help-row"><span style="color:#f1c40f">东山再起 (100)</span><span>重置棋局</span></div>
+            </div>
+            <p style="color:#aaa; text-align:center; margin-bottom:0; margin-top:15px;">点击任意处关闭</p>
         </div>
     </div>
 
     <div class="modal-mask" id="resultOverlay">
         <div class="result-text" id="resultText">胜利</div>
+        <div id="resultDesc" style="color:#aaa; margin-bottom:20px; text-align:center;"></div>
         <button class="restart-btn" onclick="initGame()">再战江湖</button>
     </div>
 
 <script>
-    // 注意：Canvas 内部由 450 改为 900 以支持高清屏，逻辑坐标需转换
     const canvas = document.getElementById('board');
     const ctx = canvas.getContext('2d');
     const effCanvas = document.getElementById('effectLayer');
     const effCtx = effCanvas.getContext('2d');
     const logBox = document.getElementById('combat-log');
+    const bgm = document.getElementById('bgm');
+    const musicBtn = document.getElementById('music-btn');
     
     const GRID = 15;
-    const CANVAS_SIZE = 900; // 内部高分辨率
-    const CELL = CANVAS_SIZE / GRID; // 60px
-    const PADDING = CELL / 2; // 30px
+    const CANVAS_SIZE = 900;
+    const CELL = CANVAS_SIZE / GRID;
+    const PADDING = CELL / 2;
 
     let board = [], turn = 1, turnCount = 1, mp = { 1: 30, 2: 30 };
     let gameOver = false, history = [], currentSkill = null, moveSource = null;
     const MP_REGEN_PLAYER = 5, MP_REGEN_AI = 8;
     const COSTS = { 1: 30, 2: 70, 3: 85, 4: 55, 5: 100 };
+    let musicStarted = false;
 
+    // --- 音乐控制 ---
+    function toggleMusic() {
+        if (bgm.paused) {
+            bgm.play().then(() => {
+                musicBtn.classList.add('playing'); musicBtn.innerText = "🎵 播放中";
+            }).catch(e => console.log("需要用户交互才能播放"));
+        } else {
+            bgm.pause(); musicBtn.classList.remove('playing'); musicBtn.innerText = "🎵 已暂停";
+        }
+    }
+    // 首次点击页面时尝试播放音乐
+    document.body.addEventListener('click', function startMusicOnClick() {
+        if (!musicStarted) {
+            bgm.volume = 0.6; // 设置音量
+            bgm.play().then(() => {
+                musicStarted = true; musicBtn.classList.add('playing'); musicBtn.innerText = "🎵 播放中";
+            }).catch(() => {});
+            document.body.removeEventListener('click', startMusicOnClick);
+        }
+    }, { once: true });
+
+
+    // --- 游戏逻辑 ---
     function initGame(keepMP = false) {
         board = Array(GRID).fill().map(() => Array(GRID).fill(0));
         history = []; turn = 1; turnCount = 1;
         if (!keepMP) mp = { 1: 30, 2: 30 };
         gameOver = false; currentSkill = null; moveSource = null;
         document.getElementById('resultOverlay').style.display = 'none';
-        logBox.innerHTML = '<div class="log-entry"><span class="log-sys">战斗开始...</span></div>';
-        updateStatus("请侠客落子");
+        logBox.innerHTML = '<div class="log-entry"><span class="log-sys">战斗开始... (点击屏幕开启音乐)</span></div>';
+        updateStatus("请侠客落子 (黑方有禁手)");
         drawBoard(); updateUI();
     }
 
@@ -248,100 +280,108 @@
         logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // --- 绘图 (适配高分屏) ---
+    // --- 绘图 ---
     function drawBoard() {
         ctx.fillStyle = "#eebb77"; ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-        ctx.beginPath(); ctx.strokeStyle = "#594f43"; ctx.lineWidth = 2; // 线条加粗
+        ctx.beginPath(); ctx.strokeStyle = "#594f43"; ctx.lineWidth = 2;
         for(let i=0; i<GRID; i++){
             ctx.moveTo(PADDING+i*CELL, PADDING); ctx.lineTo(PADDING+i*CELL, PADDING+(GRID-1)*CELL);
             ctx.moveTo(PADDING, PADDING+i*CELL); ctx.lineTo(PADDING+(GRID-1)*CELL, PADDING+i*CELL);
-        }
-        ctx.stroke();
-        [3,7,11].forEach(r=>[3,7,11].forEach(c=>{
-            ctx.beginPath(); ctx.arc(PADDING+c*CELL, PADDING+r*CELL, 6, 0, 2*Math.PI); ctx.fillStyle="#2c3e50"; ctx.fill();
-        }));
+        } ctx.stroke();
+        [3,7,11].forEach(r=>[3,7,11].forEach(c=>{ ctx.beginPath(); ctx.arc(PADDING+c*CELL, PADDING+r*CELL, 6, 0, 2*Math.PI); ctx.fillStyle="#2c3e50"; ctx.fill(); }));
         for(let r=0; r<GRID; r++) for(let c=0; c<GRID; c++) if(board[r][c] !== 0) drawPiece(r, c, board[r][c]);
-        
-        if(moveSource) {
-            ctx.beginPath(); ctx.arc(PADDING+moveSource.c*CELL, PADDING+moveSource.r*CELL, 28, 0, 2*Math.PI);
-            ctx.strokeStyle="#00C0FF"; ctx.lineWidth=6; ctx.stroke();
-        }
-        if(history.length > 0) {
-            let last = history[history.length-1];
-            ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(PADDING+last.c*CELL, PADDING+last.r*CELL, 6, 0, 2*Math.PI); ctx.fill();
-        }
+        if(moveSource) { ctx.beginPath(); ctx.arc(PADDING+moveSource.c*CELL, PADDING+moveSource.r*CELL, 28, 0, 2*Math.PI); ctx.strokeStyle="#00C0FF"; ctx.lineWidth=6; ctx.stroke(); }
+        if(history.length > 0) { let last = history[history.length-1]; ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(PADDING+last.c*CELL, PADDING+last.r*CELL, 6, 0, 2*Math.PI); ctx.fill(); }
     }
-
     function drawPiece(r, c, type) {
-        const x = PADDING + c*CELL, y = PADDING + r*CELL;
-        ctx.beginPath(); ctx.arc(x, y, 26, 0, 2*Math.PI); // 棋子半径放大
+        const x = PADDING + c*CELL, y = PADDING + r*CELL; ctx.beginPath(); ctx.arc(x, y, 26, 0, 2*Math.PI);
         const grad = ctx.createRadialGradient(x-10, y-10, 5, x, y, 26);
-        if(type===1){ grad.addColorStop(0,"#444"); grad.addColorStop(1,"#000"); }
-        else { grad.addColorStop(0,"#fff"); grad.addColorStop(1,"#ddd"); }
+        if(type===1){ grad.addColorStop(0,"#333"); grad.addColorStop(1,"#000"); } else { grad.addColorStop(0,"#fff"); grad.addColorStop(1,"#ddd"); }
         ctx.fillStyle = grad; ctx.fill();
     }
 
-    // --- 交互核心修复 ---
+    // --- 交互核心 ---
     canvas.addEventListener('click', e => {
         if(gameOver || turn !== 1) return;
-        
-        // 获取 Canvas 在屏幕上的实际显示矩形
         const rect = canvas.getBoundingClientRect();
-        
-        // 计算缩放比：Canvas 内部宽度 (900) / 实际显示宽度
         const scaleX = CANVAS_SIZE / rect.width;
         const scaleY = CANVAS_SIZE / rect.height;
-        
-        // 转换坐标
         const x = (e.clientX - rect.left) * scaleX;
         const y = (e.clientY - rect.top) * scaleY;
-        
         const c = Math.round((x - PADDING) / CELL);
         const r = Math.round((y - PADDING) / CELL);
-        
         if(r<0||r>=GRID||c<0||c>=GRID) return;
 
         // 技能逻辑
         if(currentSkill) {
-            if(currentSkill === 2) {
-                if(!moveSource) {
-                    if(board[r][c] === 2) { moveSource = {r,c}; updateStatus("选择目标空位"); drawBoard(); } 
-                    else updateStatus("只能选白子", "#FF4757");
-                } else {
-                    if(board[r][c] === 0) {
-                        mp[1] -= COSTS[2]; board[moveSource.r][moveSource.c] = 0; board[r][c] = 2;
-                        history = []; addLog(`施放 <span class="log-skill">飞沙走石</span>`, 'p1');
-                        playVisualEffect(2, moveSource.r, moveSource.c, r, c);
-                        currentSkill = null; moveSource = null; drawBoard(); updateUI();
-                        if(checkWin(r, c, 2)) endGame(2); else nextTurn();
-                    } else updateStatus("必须是空位", "#FF4757");
-                } return;
-            }
-            if(currentSkill === 4) {
-                mp[1] -= COSTS[4];
-                [[0,0],[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc]) => { let nr=r+dr, nc=c+dc; if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID) board[nr][nc] = 0; });
-                history = []; addLog(`施放 <span class="log-skill">力拔山兮</span>`, 'p1');
-                playVisualEffect(4, r, c); currentSkill = null; drawBoard(); updateUI(); nextTurn(); return;
-            }
+            handleSkillClick(r, c); return;
         }
-        // 普通落子
+        
+        // 普通落子 (加入禁手判断)
         if(board[r][c] === 0) {
-            board[r][c] = 1; history.push({r,c,p:1}); drawBoard(); addLog(`落子 (${r+1},${c+1})`, 'p1');
-            if(checkWin(r, c, 1)) { endGame(1); return; } nextTurn();
+            board[r][c] = 1; // 暂时落子用于判断
+            
+            // 1. 检查是否成五 (最高优先级)
+            const isFive = checkWinExact5(r, c, 1);
+
+            // 2. 检查禁手
+            let forbiddenType = null;
+            // 长连禁手 (绝对禁止，即使成五也不行，除非规则允许长连算赢，这里采用专业规则：长连判负)
+            if (checkOverline(r, c, 1)) forbiddenType = "长连禁手"; 
+            // 如果没有长连，且没有成五，再检查三三和四四
+            else if (!isFive) {
+                if (checkDoubleFour(r, c, 1)) forbiddenType = "四四禁手";
+                else if (checkDoubleThree(r, c, 1)) forbiddenType = "三三禁手";
+            }
+
+            if (forbiddenType) {
+                board[r][c] = 0; // 收回棋子
+                // 触发禁手，直接判负
+                addLog(`触发 <span class="log-forbidden">${forbiddenType}</span>，判定失败！`, 'p1');
+                endGame(2, `黑方触发【${forbiddenType}】`);
+                return;
+            }
+
+            // 落子有效
+            history.push({r,c,p:1}); drawBoard(); addLog(`落子 (${r+1},${c+1})`, 'p1');
+            
+            if(isFive) { endGame(1, "黑方五连达成"); return; } 
+            nextTurn();
         }
     });
 
-    // --- 技能 ---
+    function handleSkillClick(r, c) {
+         if(currentSkill === 2) {
+            if(!moveSource) {
+                if(board[r][c] === 2) { moveSource = {r,c}; updateStatus("选择目标空位"); drawBoard(); } 
+                else updateStatus("只能选白子", "#FF4757");
+            } else {
+                if(board[r][c] === 0) {
+                    mp[1] -= COSTS[2]; board[moveSource.r][moveSource.c] = 0; board[r][c] = 2;
+                    history = []; addLog(`施放 <span class="log-skill">飞沙走石</span>`, 'p1');
+                    playVisualEffect(2, moveSource.r, moveSource.c, r, c);
+                    currentSkill = null; moveSource = null; drawBoard(); updateUI();
+                    if(checkWinSimple(r, c, 2)) endGame(2, "白方被移子成五"); else nextTurn();
+                } else updateStatus("必须是空位", "#FF4757");
+            } return;
+        }
+        if(currentSkill === 4) {
+            mp[1] -= COSTS[4];
+            [[0,0],[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc]) => { let nr=r+dr, nc=c+dc; if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID) board[nr][nc] = 0; });
+            history = []; addLog(`施放 <span class="log-skill">力拔山兮</span>`, 'p1');
+            playVisualEffect(4, r, c); currentSkill = null; drawBoard(); updateUI(); nextTurn(); return;
+        }
+    }
+
+    // --- 技能按钮 ---
     window.useSkill = function(id) {
         if(turn !== 1 || gameOver) return;
         if(mp[1] < COSTS[id]) { updateStatus("内力不足！", "#FF4757"); return; }
         if(currentSkill === id && !moveSource) { currentSkill = null; updateStatus("取消施法"); updateUI(); return; }
-        
         moveSource = null; 
-        if(id === 1) { if(history.length < 2) { updateStatus("无棋可悔"); return; } mp[1] -= COSTS[1]; undo(); undo(); drawBoard(); updateUI(); addLog(`施放 <span class="log-skill">时光倒流</span>`, 'p1'); playVisualEffect(1, 7, 7); return; }
+        if(id === 1) { if(history.length < 2) { updateStatus("无棋可悔", "#FF4757"); return; } mp[1] -= COSTS[1]; undo(); undo(); drawBoard(); updateUI(); addLog(`施放 <span class="log-skill">时光倒流</span>`, 'p1'); playVisualEffect(1, 7, 7); return; }
         if(id === 3) { mp[1] -= COSTS[3]; updateUI(); updateStatus("额外回合！", "#00C0FF"); addLog(`施放 <span class="log-skill">静如止水</span>`, 'p1'); playVisualEffect(3, 7, 7); return; }
         if(id === 5) { if(confirm("消耗全部内力重置？")) { mp[1] -= COSTS[5]; addLog(`施放 <span class="log-skill">东山再起</span>`, 'p1'); playVisualEffect(5, 7, 7); setTimeout(() => initGame(true), 500); } return; }
-        
         currentSkill = id; updateUI();
         if(id === 2) updateStatus("选择：敌方棋子 -> 空位");
         if(id === 4) updateStatus("选择：爆破中心点");
@@ -357,56 +397,115 @@
     // --- AI ---
     function aiTurn() {
         updateStatus("魔头思考中...");
-        let aiThree = findOpenThree(board, 2);
-        if (aiThree && mp[2] >= COSTS[3]) {
-            addLog(`施放 <span class="log-skill">静如止水</span> (绝杀)`, 'p2');
-            mp[2] -= COSTS[3]; playVisualEffect(3, 7, 7);
-            makeAiMove(aiThree.r, aiThree.c, false); turn = 2; setTimeout(aiTurn, 800); return;
-        }
+        // AI 不受禁手限制，使用简单规则判断胜利
+        let killMove = solveVCF(board, 2, 15); if (killMove) { makeAiMove(killMove.r, killMove.c); return; }
         let threat = findThreat(board, 1); 
         if (threat && threat.score >= 8000 && mp[2] >= COSTS[4]) {
             let canBlock = findForcedBlock(board, 1);
-            if (!canBlock || mp[2] > 80) {
-                addLog(`施放 <span class="log-skill">力拔山兮</span> (解围)`, 'p2');
-                mp[2] -= COSTS[4];
+            if (!canBlock || mp[2] > 90) {
+                addLog(`施放 <span class="log-skill">力拔山兮</span> (解围)`, 'p2'); mp[2] -= COSTS[4];
                 [[0,0],[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc]) => { let nr=threat.r+dr, nc=threat.c+dc; if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID) board[nr][nc] = 0; });
-                history = []; playVisualEffect(4, threat.r, threat.c);
-                drawBoard(); updateUI();
-                turn = 1; turnCount++; mp[1] = Math.min(100, mp[1] + MP_REGEN_PLAYER); updateUI();
-                return;
+                history = []; playVisualEffect(4, threat.r, threat.c); drawBoard(); updateUI(); turn = 1; turnCount++; mp[1] = Math.min(100, mp[1] + MP_REGEN_PLAYER); updateUI(); return;
             }
         }
-        let killMove = solveVCF(board, 2, 15); if (killMove) { makeAiMove(killMove.r, killMove.c); return; }
-        let defendMove = solveVCF(board, 1, 8); if (defendMove) { makeAiMove(defendMove.r, defendMove.c); return; }
+        let defendMove = solveVCF(board, 1, 10); if (defendMove) { makeAiMove(defendMove.r, defendMove.c); return; }
         let best = getBestMove(); makeAiMove(best.r, best.c);
     }
     function makeAiMove(r, c, changeTurn = true) {
         board[r][c] = 2; history.push({r,c,p:2}); drawBoard(); addLog(`落子 (${r+1},${c+1})`, 'p2');
-        if(checkWin(r, c, 2)) endGame(2);
-        else if (changeTurn) { turn = 1; turnCount++; mp[1] = Math.min(100, mp[1] + MP_REGEN_PLAYER); updateUI(); updateStatus("请侠客落子"); }
+        if(checkWinSimple(r, c, 2)) endGame(2, "白方五连达成");
+        else if (changeTurn) { turn = 1; turnCount++; mp[1] = Math.min(100, mp[1] + MP_REGEN_PLAYER); updateUI(); updateStatus("请侠客落子 (黑方有禁手)"); }
     }
 
-    // AI Utils
+    // --- 核心规则判断函数 ---
+    
+    // 获取指定方向的棋子序列字符串 (例如 "01110")
+    function getLineStr(r, c, dr, dc, p) {
+        let str = "";
+        for (let i = -4; i <= 4; i++) {
+            let nr = r + i * dr, nc = c + i * dc;
+            if (nr < 0 || nr >= GRID || nc < 0 || nc >= GRID) str += "X"; // 边界
+            else str += board[nr][nc];
+        }
+        return str;
+    }
+
+    // 检查长连 (超过5个)
+    function checkOverline(r, c, p) {
+        const ds = [[1,0],[0,1],[1,1],[1,-1]];
+        for(let [dr,dc] of ds){
+            let k=1;
+            let i=1; while(board[r+i*dr]?.[c+i*dc]===p){k++;i++}
+            i=1; while(board[r-i*dr]?.[c-i*dc]===p){k++;i++}
+            if(k > 5) return true;
+        } return false;
+    }
+    
+    // 检查恰好5个
+    function checkWinExact5(r, c, p) {
+        const ds = [[1,0],[0,1],[1,1],[1,-1]];
+        for(let [dr,dc] of ds){
+            let k=1;
+            let i=1; while(board[r+i*dr]?.[c+i*dc]===p){k++;i++}
+            i=1; while(board[r-i*dr]?.[c-i*dc]===p){k++;i++}
+            if(k === 5) return true;
+        } return false;
+    }
+
+    // 检查四四禁手 (简单版：两个以上的冲四或活四)
+    function checkDoubleFour(r, c, p) {
+        let fourCount = 0;
+        const ds = [[1,0],[0,1],[1,1],[1,-1]];
+        const patterns = ["011110", "11110", "01111", "10111", "11011", "11101"]; // 活四和冲四模式
+        for(let [dr,dc] of ds){
+            let line = getLineStr(r, c, dr, dc, p);
+            // 检查当前点是否构成了四
+            for(let pat of patterns) {
+                 // 简单的正则匹配，确保中心点参与了模式
+                 // 注意：这里是简化的实现，专业规则更复杂
+                 if(line.includes(pat) && line.indexOf(pat) <= 4 && line.indexOf(pat) + pat.length >= 5) {
+                     fourCount++; break; 
+                 }
+            }
+        }
+        return fourCount >= 2;
+    }
+
+    // 检查三三禁手 (简单版：两个以上的活三)
+    function checkDoubleThree(r, c, p) {
+        let openThreeCount = 0;
+        const ds = [[1,0],[0,1],[1,1],[1,-1]];
+        const openThreePat = "01110"; // 活三模式
+        for(let [dr,dc] of ds){
+            let line = getLineStr(r, c, dr, dc, p);
+            // 简化的活三检查
+            if(line.includes(openThreePat) && line.indexOf(openThreePat) <= 4 && line.indexOf(openThreePat) + openThreePat.length >= 5) {
+                openThreeCount++;
+            }
+        }
+        return openThreeCount >= 2;
+    }
+
+    // 白方(AI)的简单胜利判断 (>=5 即赢)
+    function checkWinSimple(r,c,p){ const ds=[[1,0],[0,1],[1,1],[1,-1]]; for(let [dr,dc] of ds){ let k=1,i=1; while(board[r+i*dr]?.[c+i*dc]===p){k++;i++} i=1; while(board[r-i*dr]?.[c-i*dc]===p){k++;i++} if(k>=5)return true; } return false; }
+
+    // --- AI 辅助 ---
     function findOpenThree(bd, p) { for(let r=0; r<GRID; r++) for(let c=0; c<GRID; c++) { if(bd[r][c]===0 && evaluatePoint(bd,r,c,p) >= 3000) return {r,c}; } return null; }
     function findThreat(bd, p) {
         let m=0,t=null; for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++) if(bd[r][c]===0){ bd[r][c]=p; let s=evaluatePoint(bd,r,c,p); bd[r][c]=0; if(s>m){m=s;t={r,c,score:s};} } 
-        if(m>=8000){ 
-            let target = null;
-            for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++){ let nr=t.r+i, nc=t.c+j; if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID&&bd[nr][nc]===p) { target={r:nr,c:nc}; break;} }
-            return target ? {r:target.r,c:target.c,score:m} : t;
-        } return null;
+        if(m>=8000){ let target = null; for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++){ let nr=t.r+i, nc=t.c+j; if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID&&bd[nr][nc]===p) { target={r:nr,c:nc}; break;} } return target ? {r:target.r,c:target.c,score:m} : t; } return null;
     }
     function solveVCF(bd,p,d) { if(d<=0)return null; let ms=findFourMoves(bd,p); for(let m of ms){ bd[m.r][m.c]=p; if(checkWinSimple(bd,m.r,m.c,p)){bd[m.r][m.c]=0;return m;} let b=findForcedBlock(bd,p); if(b){bd[b.r][b.c]=(p===1?2:1);let n=solveVCF(bd,p,d-1);bd[b.r][b.c]=0;bd[m.r][m.c]=0;if(n)return m;} else{bd[m.r][m.c]=0;return m;} bd[m.r][m.c]=0; } return null; }
     function findFourMoves(bd,p) { let ms=[]; for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++)if(bd[r][c]===0&&evaluatePoint(bd,r,c,p)>=10000)ms.push({r,c}); return ms;}
     function findForcedBlock(bd,atk) { for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++)if(bd[r][c]===0) { bd[r][c]=atk; let w=checkWinSimple(bd,r,c,atk); bd[r][c]=0; if(w) return {r,c}; } return null; }
     function getBestMove() { let b=null,m=-Infinity; for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++)if(board[r][c]===0) { let s=evaluatePoint(board,r,c,2)+evaluatePoint(board,r,c,1)*1.2; if(s>m){m=s;b={r,c};} } if(!b)b={r:7,c:7}; return b; }
     function evaluatePoint(bd,r,c,p) { let s=0; const ds=[[1,0],[0,1],[1,1],[1,-1]]; for(let [dr,dc] of ds){ let k=1,e=0,i=1; while(bd[r+i*dr]?.[c+i*dc]===p){k++;i++} if(bd[r+i*dr]?.[c+i*dc]===0)e++; i=1; while(bd[r-i*dr]?.[c-i*dc]===p){k++;i++} if(bd[r-i*dr]?.[c-i*dc]===0)e++; if(k>=5)s+=100000;else if(k==4)s+=(e==2?10000:2000);else if(k==3)s+=(e==2?1000:100);else if(k==2&&e==2)s+=50; } return s; }
-    function checkWin(r,c,p){return checkWinSimple(board,r,c,p);}
-    function checkWinSimple(bd,r,c,p){ const ds=[[1,0],[0,1],[1,1],[1,-1]]; for(let [dr,dc] of ds){ let k=1,i=1; while(bd[r+i*dr]?.[c+i*dc]===p){k++;i++} i=1; while(bd[r-i*dr]?.[c-i*dc]===p){k++;i++} if(k>=5)return true; } return false; }
-    function endGame(w) {
-        gameOver=true; const mask=document.getElementById('resultOverlay'); const txt=document.getElementById('resultText');
+    
+    function endGame(w, desc="") {
+        gameOver=true; const mask=document.getElementById('resultOverlay'); const txt=document.getElementById('resultText'); const descEl=document.getElementById('resultDesc');
         mask.style.display='flex'; txt.innerText=w===1?"胜天半子":"胜败兵家"; txt.style.color=w===1?"#ffd700":"#aaa";
-        addLog(`战斗结束：${w===1?'侠客胜利':'魔头胜利'}`, 'sys');
+        descEl.innerText = desc;
+        addLog(`战斗结束：${w===1?'侠客胜利':'魔头胜利'} (${desc})`, 'sys');
     }
     function updateUI() {
         document.getElementById('p1-mp').style.width=mp[1]+"%"; document.getElementById('p1-val').innerText=Math.floor(mp[1]);
